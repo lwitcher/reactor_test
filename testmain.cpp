@@ -1,8 +1,9 @@
 #include "cthreading.h"
+#include "creactor.h"
 #include <iostream>
 
 using namespace std;
-//²âÊÔÏß³Ì°²È«list
+//ï¿½ï¿½ï¿½ï¿½ï¿½ß³Ì°ï¿½È«list
 /*
 class testin :public cthreading
 {
@@ -66,7 +67,7 @@ public:
 };
 int main()
 {
-    //Êä³öÊýÁ¿Ó¦¸ÃÕýÈ·£¬Èô½«¼ÓËøÈ¥µôºóÊä³ö¸öÊý²»ÕýÈ·
+    //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½ï¿½ï¿½ï¿½È·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È·
     threading_list<int> l;
     testin thd(&l);
     thd.create();
@@ -80,3 +81,79 @@ int main()
     return 0;
 }
 */
+
+
+/*æµ‹è¯•eventfd
+#include <sys/epoll.h>
+#include <sys/eventfd.h>
+#include <iostream>
+#include <unistd.h>
+using namespace std;
+class testwrite :public cthreading
+{
+public:
+
+    virtual void run()
+    {
+        this_thread::sleep_for(chrono::microseconds(20));
+        eventfd_write(fd_, 1);
+        this_thread::sleep_for(chrono::microseconds(20));
+        eventfd_write(fd_, 1);
+        this_thread::sleep_for(chrono::microseconds(20));
+        eventfd_write(fd_, 1);
+        eventfd_write(fd_, 1);
+    }
+    int fd_;
+};
+
+class testread :public cthreading
+{
+public:
+
+    virtual void run()
+    {
+        //this_thread::sleep_for(chrono::microseconds(1));
+        int efd = epoll_create(1);
+        struct epoll_event evt;
+		evt.events = EPOLLIN;
+		int iRet = epoll_ctl(efd, EPOLL_CTL_ADD, fd_, &evt);
+		while(true)
+		{
+			struct epoll_event events[8] = {};
+			int nr_events = epoll_wait(efd, events, 8, -1);
+			if (nr_events < 0)
+			{
+				perror("epoll_wait");
+				return;
+			}
+			for (int i = 0; i < nr_events; i++)
+			{
+				uint64_t tmp;
+				eventfd_read(fd_, &tmp);
+				cout << "read:  " << tmp<< endl;
+			}
+		}
+    }
+    int fd_;
+};
+
+int main()
+{
+	int fd = eventfd(0,0);
+	testread reader;
+	reader.fd_ = fd;
+	testwrite w1;
+	w1.fd_ = fd;
+	reader.create();
+	w1.create();
+	reader.join();
+    return 0;
+}
+*/
+
+
+
+int main()
+{
+    return 0;
+}

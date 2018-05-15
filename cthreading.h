@@ -3,6 +3,7 @@
 #include <list>
 #include <mutex>
 #include <chrono>
+#include <functional>
 class cthreading
 {
 public:
