@@ -3,7 +3,6 @@
 #include <iostream>
 
 using namespace std;
-//�����̰߳�ȫlist
 /*
 class testin :public cthreading
 {
@@ -67,7 +66,6 @@ public:
 };
 int main()
 {
-    //�������Ӧ����ȷ����������ȥ���������������ȷ
     threading_list<int> l;
     testin thd(&l);
     thd.create();
@@ -152,8 +150,25 @@ int main()
 */
 
 
-
+#include <unistd.h>
+class input_handler:public cevent_handle
+{
+public:
+	void handle_input()
+	{
+		cout << "handle_input: ";
+		char s[1024] = {0};
+		read(fd_, s, 1024);
+		cout << s << endl;
+	}
+};
 int main()
 {
+	creactor reactor;
+	input_handler handler;
+	handler.set_fd(0);
+	reactor.regist_event_handler(&handler);
+	reactor.create();
+	reactor.join();
     return 0;
 }

@@ -1,6 +1,9 @@
 #include "creactor.h"
 #include <sys/epoll.h>
 #include <sys/eventfd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <unistd.h>
 #define MAX_EVENTS 2048
 creactor::creactor() :
@@ -85,7 +88,12 @@ void creactor::run() {
 	epoll_fd_ = -1;
 }
 
+//TODO 最好是同步的
 bool creactor::regist_event_handler(cevent_handle* ptr) {
+	if(ptr->get_fd() == -1)
+	{
+		return false;
+	}
 	{
 		GET_THREAD_SAFE_LIST(evt_list, evt_list_ptr_);
 		ptr->stat_ = cevent_handle::STAT_ADD;
@@ -95,7 +103,12 @@ bool creactor::regist_event_handler(cevent_handle* ptr) {
 	return true;
 }
 
+//TODO 最好是同步的
 bool creactor::unregist_event_handler(cevent_handle* ptr) {
+	if(ptr->get_fd() == -1)
+	{
+		return false;
+	}
 	ptr->stat_ = cevent_handle::STAT_DEL;
 	eventfd_write(event_op_list_, 1);
 	return true;
@@ -110,4 +123,35 @@ int cchannel::read_buffer(char* buf, int& count) {
 		if (read_count) {
 		}
 	}
+}
+
+int cchannel::connect(const char* ip, int port){
+	struct sockaddr_in dest_addr;
+	fd_ = socket(AF_INET, SOCK_STREAM, 0);
+	dest_addr.sin_family = AF_INET;
+	dest_addr.sin_port = htons(port);
+	dest_addr.sin_addr.s_addr = inet_addr(ip);
+	return ::connect(fd_, (struct sockaddr *) &dest_addr,sizeof(struct sockaddr));
+}
+
+int cchannel::listen(const char* ip, int port) {
+	if(fd_ == -1)
+	{
+		return -1;
+	}
+	struct sockaddr_in my_addr;
+	fd_ = socket(AF_INET, SOCK_STREAM, 0);
+	my_addr.sin_family = AF_INET;
+	my_addr.sin_port = htons(port);
+	my_addr.sin_addr.s_addr = inet_addr(ip);
+	bind(fd_, (struct sockaddr *) &my_addr,sizeof(struct sockaddr));
+	return ::listen(fd_, 5);
+}
+
+int cchannel::close() {
+	if(fd_ == -1)
+	{
+		return -1;
+	}
+	::close(fd_);
 }

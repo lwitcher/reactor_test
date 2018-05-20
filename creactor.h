@@ -16,8 +16,8 @@ class cevent_handle
 public:
 	cevent_handle():fd_(-1),stat_(STAT_ADD){}
 	virtual ~cevent_handle(){}
-    void handle_input(){};
-    void handle_output(){};
+	virtual void handle_input(){};
+	virtual void handle_output(){};
 
 	int get_fd() const {
 		return fd_;
@@ -27,7 +27,7 @@ public:
 		fd_ = fd;
 	}
 
-private:
+protected:
     int fd_;
     event_status stat_;
 };
@@ -57,6 +57,9 @@ public:
 	virtual ~cchannel(){}
 	virtual int send_buffer(char* buf, int count);
 	virtual int read_buffer(char* buf, int& count);
+	virtual int connect(const char* ip, int port);
+	virtual int listen(const char* ip, int port);
+	virtual int close();
 
 	int get_id() const {
 		return fd_;
